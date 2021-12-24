@@ -4,21 +4,25 @@ import connectDB from "./config/db.js";
 import colors from "colors";
 
 import productRoutes from "./routes/productsRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
 connectDB();
 
 const app = express();
 
-// var cors = require("cors");
+app.use(express.json());
 
-// app.use(cors());
+import cors from "cors";
+
+app.use(cors());
 
 app.get("/", (req, res) => {
   res.send("Yo");
 });
 
 app.use("/api/products", productRoutes);
+app.use("/api/users", userRoutes);
 
 app.use(notFound);
 

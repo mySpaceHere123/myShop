@@ -32,6 +32,9 @@ const ProductScreen = (props) => {
   };
   // const loading = false;
   // const product = {};
+  if (error) {
+    return <>{error}</>;
+  }
   return (
     <>
       <Link to="/" className="btn btn-light my-3">
