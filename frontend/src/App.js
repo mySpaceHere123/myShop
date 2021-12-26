@@ -20,7 +20,7 @@ const App = () => {
       <main className="py-3">
         <Container>
           <Route path="/register" component={RegisterScreen} />
-          {/* <Route path="/order/:id" component={OrderScreen} /> */}
+          <Route path="/order/:id" component={OrderScreen} />
           <Route path="/payment" component={PaymentScreen} />
           <Route path="/shipping" component={ShippingScreen} />
           <Route path="/placeorder" component={PlaceOrderScreen} />

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Row,
   Col,
@@ -10,20 +10,57 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { getOrderDetails } from "../actions/orderActions";
+import axios from "axios";
 
 const OrderScreen = ({ match }) => {
   const orderId = match.params.id;
-  // console.log(orderId);
+
+  const [sdkReady, setSdkReady] = useState(false);
 
   const dispatch = useDispatch();
 
   const orderDetails = useSelector((state) => state.orderDetails);
-  console.log(orderDetails);
   const { order, loading, error } = orderDetails;
 
+  const orderPay = useSelector((state) => state.orderPay);
+  const { loading: loadingPay, success: successPay } = orderPay;
+
+  if (!loading) {
+    // console.log("calculating");
+    order.itemsPrice = order.orderItems.reduce(
+      (acc, item) => acc + item.price * item.qty,
+      0
+    );
+    order.shippingPrice = 60;
+    order.taxPrice = Number(0.08 * order.itemsPrice);
+    order.totalPrice = order.shippingPrice + order.taxPrice + order.itemsPrice;
+  }
+
   useEffect(() => {
-    dispatch(getOrderDetails(orderId));
-  }, []);
+    console.log("useEffect called");
+
+    const addPayPalScript = async () => {
+      const { data: clientId } = await axios.get("/api/config/paypal");
+      const script = document.createElement("script");
+      script.type = "text/javascript";
+      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}`;
+      script.async = true;
+      script.onload = () => {
+        setSdkReady(true);
+      };
+      document.body.appendChild(script);
+    };
+
+    if (!order || successPay) {
+      dispatch(getOrderDetails(orderId));
+    } else if (!order.isPaid) {
+      if (!window.paypal) {
+        addPayPalScript();
+      } else {
+        setSdkReady(true);
+      }
+    }
+  }, [dispatch, orderId, successPay, order]);
 
   return loading ? (
     <>Loading...</>
@@ -37,20 +74,32 @@ const OrderScreen = ({ match }) => {
           <ListGroup variant="flush">
             <ListGroup.Item>
               <h2>Shipping</h2>
+              <strong>Name: </strong>
+              {order.user.name}
+              <p>
+                <strong>Email: </strong>
+                <a href={`mailto:${order.user.email}`}>{order.user.email}</a>
+              </p>
               <p>
                 <strong>Address:</strong>
                 {order.shippingAddress.address},{order.shippingAddress.city}{" "}
                 {order.shippingAddress.postalCode},{" "}
                 {order.shippingAddress.country}
               </p>
+              {order.isDelivered ? (
+                <>Delivered on {order.isDelivered}</>
+              ) : (
+                <>Not Delivered</>
+              )}
             </ListGroup.Item>
-
             <ListGroupItem>
               <h2>Payment Method</h2>
-              <strong>Method: </strong>
-              {order.PaymentMethod}
+              <p>
+                <strong>Method: </strong>
+                {order.paymentMethod}
+              </p>
+              {order.isPaid ? <>Paid on {order.paidAt}</> : <>Not Paid</>}
             </ListGroupItem>
-
             <ListGroupItem>
               <h2>Order Items</h2>
               {order.orderItems.length === 0 ? (

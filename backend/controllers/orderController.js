@@ -63,4 +63,34 @@ const getOrderById = async (req, res) => {
   }
 };
 
-export { addOrderItems, getOrderById };
+//@description Update order to paid
+//@route GET /api/orders/:id/pay
+//@access Private
+const updateOrderToPaid = async (req, res) => {
+  try {
+    // console.log(req.params.id);
+    const order = await Order.findById(req.params.id).populate();
+    // console.log(order);
+
+    if (order) {
+      order.isPaid = true;
+      order.paidAt = Date.now();
+      order.paymentResult = {
+        id: req.body.id,
+        status: req.body.status,
+        update_time: req.body.update_time,
+        email_address: req.body.payer.email_address,
+      };
+
+      const updatedOrder = await order.save();
+
+      res.json(updatedOrder);
+    } else {
+      throw new Error("Order Not Found");
+    }
+  } catch (error) {
+    res.status(404).json(error);
+  }
+};
+
+export { addOrderItems, getOrderById, updateOrderToPaid };
