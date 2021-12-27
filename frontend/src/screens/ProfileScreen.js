@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Form, Button, Row, Col } from "react-bootstrap";
+import { Form, Button, Row, Col, Table } from "react-bootstrap";
+import { LinkContainer } from "react-router-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
+import { listMyOrders } from "../actions/orderActions";
 import { getUsersDetails, updateUserProfile } from "../actions/userActions";
 
 const ProfileScreen = ({ location, history }) => {
@@ -21,12 +23,16 @@ const ProfileScreen = ({ location, history }) => {
   const userUpdateProfile = useSelector((state) => state.userUpdateProfile);
   const { success } = userUpdateProfile;
 
+  const orderListMy = useSelector((state) => state.orderListMy);
+  const { loading: loadingOrders, error: errorOrders, orders } = orderListMy;
+
   useEffect(() => {
     if (!userInfo) {
       history.push("/login");
     } else {
       if (!user.name) {
         dispatch(getUsersDetails("profile"));
+        dispatch(listMyOrders());
       } else {
         setName(user.name);
         setEmail(user.email);
@@ -95,6 +101,47 @@ const ProfileScreen = ({ location, history }) => {
       </Col>
       <Col md={9}>
         <h2>My orders</h2>
+        {loadingOrders ? (
+          <>Loading...</>
+        ) : errorOrders ? (
+          <>{errorOrders}</>
+        ) : (
+          <Table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Paid</th>
+                <th>Delivered</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => {
+                return (
+                  <tr key={order._id}>
+                    <td>{order._id}</td>
+                    <td>{order.createdAt.substring(0, 10)}</td>
+                    <td>{order.totalPrice}</td>
+                    <td>{order.isPaid ? <>Paid</> : <>unpaid</>}</td>
+                    <td>
+                      {order.isDelivered ? <>Delivered</> : <>not delivered</>}
+                    </td>
+                    <td>
+                      <td>
+                        <LinkContainer to={`/order/${order._id}`}>
+                          <Button className="btn-sm" variant="light">
+                            Details
+                          </Button>
+                        </LinkContainer>
+                      </td>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        )}
       </Col>
     </Row>
   );
