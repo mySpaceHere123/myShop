@@ -32,4 +32,45 @@ const getProductById = async (req, res) => {
   }
 };
 
-export { getProductById, getProducts };
+//@description Delete a product
+//@route DELETE /api/products/:id
+//@access Private/Admin
+const deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    // console.log(req.params.id);
+    if (product) {
+      await product.remove();
+      res.json({ message: "Removed" });
+    } else {
+      res.status(404);
+      throw new Error("Product not found");
+      // res.send("yo");
+    }
+  } catch (error) {
+    res.send(error);
+  }
+};
+
+//@description Create a product
+//@route POST /api/products/:id
+//@access Private/Admin
+const createProduct = async (req, res) => {
+  try {
+    const product = new Product({
+      name: "Sample name",
+      price: 0,
+      user: req.user._id,
+      image: "/images/sample.jpg",
+      brand: "Sample brand",
+      category: "Sample category",
+      countInStock: 0,
+      numReviews: 0,
+      description: "Sample description",
+    });
+  } catch (error) {
+    res.send(error);
+  }
+};
+
+export { getProductById, getProducts, deleteProduct };
